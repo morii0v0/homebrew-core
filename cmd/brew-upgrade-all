@@ -1,0 +1,12 @@
+#!/bin/sh
+
+
+(
+    echo "upgrading formula..."
+    brew upgrade
+    echo "done"
+) && (
+    echo "upgrading cask..."
+    brew upgrade --cask `brew list --cask`
+    echo "done"
+)
