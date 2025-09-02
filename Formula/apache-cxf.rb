@@ -15,6 +15,8 @@ class ApacheCxf < Formula
     
     bin.install_symlink Dir["#{libexec}/bin/*"]
     
+    samples.install_symlink Dir["#{libexec}/samples"]
+    
     (bin/"cxf-env").write <<~EOS
       #!/bin/bash
       export CXF_HOME="#{libexec}"
