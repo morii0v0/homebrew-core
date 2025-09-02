@@ -22,14 +22,14 @@ class ApacheCxf < Formula
     if content.include?("me=`basename $0`")
       content.gsub!(
         /(cxf_home=)(\$CXF_HOME|"\$CXF_HOME"|'\$CXF_HOME')/,
-        "\\1${CXF_HOME:-$(brew --prefix #{name})}"
+        "\\1${CXF_HOME:-$(brew --prefix #{name})/libexec}"
       )
         #"\\1\\${CXF_HOME:-#{libexec}}"
       
       unless content.include?("cxf_home=")
         content.gsub!(
           /(me=`basename \$0`)/,
-          "\\1\ncxf_home=${CXF_HOME:-$(brew --prefix #{name})}"
+          "\\1\ncxf_home=${CXF_HOME:-$(brew --prefix #{name})/libexec}"
         )
           #"\\1\ncxf_home=\\${CXF_HOME:-#{libexec}}"
       end
@@ -41,7 +41,7 @@ class ApacheCxf < Formula
     #File.chmod(0755, f)
 
     #if File.read(f).include?("cxf_home=${CXF_HOME:-#{libexec}}")
-    if File.read(f).include?("cxf_home=${CXF_HOME:-$(brew --prefix #{name})}")
+    if File.read(f).include?("cxf_home=${CXF_HOME:-$(brew --prefix #{name})/libexec}")
       ohai "Successfully modified #{f}"
     else
       opoo "Failed to modify #{f}"
