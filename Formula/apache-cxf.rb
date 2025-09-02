@@ -13,6 +13,37 @@ class ApacheCxf < Formula
     rm_f Dir["bin/*.bat"]
     
     libexec.install Dir["*"]
+
+    Dir["#{libexec}/bin/*"].each do |f|
+    next if File.directory?(f) || File.extname(f) == ".bat"
+    
+    content = File.read(f)
+    
+    if content.include?("me=`basename $0`")
+      content.gsub!(
+        /(cxf_home=)(\$CXF_HOME|"\$CXF_HOME"|'\$CXF_HOME')/,
+        "\\1\\${CXF_HOME:-#{libexec}}"
+      )
+      
+      unless content.include?("cxf_home=")
+        content.gsub!(
+          /(me=`basename \$0`)/,
+          "\\1\ncxf_home=\\${CXF_HOME:-#{libexec}}"
+        )
+      end
+    end
+    
+    #File.open(f, "w") { |file| file.write(content) }
+    File.write(f, content)
+    
+    #File.chmod(0755, f)
+
+    if File.read(f).include?("cxf_home=${CXF_HOME:-#{libexec}}")
+      ohai "Successfully modified #{f}"
+    else
+      opoo "Failed to modify #{f}"
+    end
+  end
     
     bin.install_symlink Dir["#{libexec}/bin/*"]
     
@@ -24,7 +55,8 @@ class ApacheCxf < Formula
     EOS
     chmod 0755, bin/"cxf-env"
 
-    (prefix/"samples").make_relative_symlink(libexec/"samples")
+    #(prefix/"samples").make_relative_symlink(libexec/"samples")
+    prefix.install_symlink libexec/"examples" => "samples"
   end
 
   def caveats
