@@ -9,10 +9,6 @@ class ApacheCxf < Formula
 
   depends_on "openjdk"
 
-  def keep_cache?
-    true
-  end
-
   def install
     rm_f Dir["bin/*.bat"]
     
