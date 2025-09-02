@@ -50,7 +50,7 @@ class ApacheCxf < Formula
     (bin/"cxf-env").write <<~EOS
       #!/bin/bash
       export CXF_HOME="#{libexec}"
-      export PATH="#{libexec}/bin:$PATH"
+      #export PATH="#{libexec}/bin:$PATH"
       exec "$@"
     EOS
     chmod 0755, bin/"cxf-env"
