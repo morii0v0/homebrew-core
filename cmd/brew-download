@@ -1,0 +1,18 @@
+#!/bin/sh
+
+proxy_addr=${PROXY_ADDR:-files.m.daocloud.io}
+
+curl_flag=false
+
+if [ "$1" = "-c" ]; then
+        curl_flag=true
+        shift 1
+fi
+
+for url in $@; do
+        if ${curl_flag}; then
+                curl -SL "${url/:\/\//://${proxy_addr}/}" -o ~/Download/$(basename ${url})
+        else
+                open -a Safari "${url/:\/\//://${proxy_addr}/}"
+        fi
+done
