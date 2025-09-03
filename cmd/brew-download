@@ -11,7 +11,7 @@ fi
 
 for url in $@; do
         if ${curl_flag}; then
-                curl -SL "${url/:\/\//://${proxy_addr}/}" -o ~/Download/$(basename ${url})
+                curl -SL "${url/:\/\//://${proxy_addr}/}" -o ~/Downloads/$(basename ${url})
         else
                 open -a Safari "${url/:\/\//://${proxy_addr}/}"
         fi
