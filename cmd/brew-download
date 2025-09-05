@@ -2,17 +2,12 @@
 
 proxy_addr=${PROXY_ADDR:-files.m.daocloud.io}
 
-curl_flag=false
-
-if [ "$1" = "-c" ]; then
-        curl_flag=true
-        shift 1
-fi
-
-for url in $@; do
-        if ${curl_flag}; then
-                curl -SL "${url/:\/\//://${proxy_addr}/}" -o ~/Downloads/$(basename ${url})
-        else
-                open -a Safari "${url/:\/\//://${proxy_addr}/}"
-        fi
+for app in $@; do
+	url=$(brew info --json=v2 ${app} | jq -r 'if (.formulae | length) > 0 then .formulae[0].bottle.stable.files.arm64_sequoia.url elif (.casks | length) > 0 then .casks[0].url end')
+	if [ -z "${url}" ]; then
+		printf "parse %s's download url\n" ${app}
+		continue
+	fi
+	proxy_url=${url/:\/\//://${proxy_addr}/}
+	curl -SL -# "${proxy_url}" -o $(brew --cache)/downloads/$(sha256 -s ${url})--$(basename ${url})
 done
