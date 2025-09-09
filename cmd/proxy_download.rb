@@ -156,11 +156,8 @@ module Homebrew
           end
 
           installer = FormulaInstaller::new(formula)
-          if args.download_only?
-            installer.fetch
-          else
-            installer.install
-          end
+          installer.fetch
+          installer.install unless args.download_only?
           return true
         rescue ErrorDuringExecution => e
           if proxies.empty? || (pos + 1 >= proxies.length)
