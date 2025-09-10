@@ -10,12 +10,17 @@ module Homebrew
           List all outdated formulae, download their updates, and install them.
           This is similar to 'brew upgrade' but provides more control and feedback.
         EOS
+        flag   "-p", "--proxy=", description: "Specify the download proxy address."
+        comma_array  "--proxies=", description: "Specify multiple download proxy addresses."
         switch "--dry-run", description: "Show what would be upgraded without actually doing it"
         switch "--download-only", description: "Only download the updates, do not install"
         switch "--verbose", description: "Show verbose output"
         switch "--force", description: "Install formulae even if they are already up-to-date"
         comma_array "--only=", description: "Only upgrade specified formulae (comma-separated)"
         comma_array "--except=", description: "Exclude specified formulae from upgrade (comma-separated)"
+        conflicts "--proxy", "--proxies"
+        conflicts "--only", "--except"
+        conflicts "--dry-run", "--download-only"
       end
 
       def run
@@ -67,7 +72,7 @@ module Homebrew
         ohai "Checking for outdated cask..."
 
         outdated = Cask::Caskroom.casks.select do |c|
-          c.outdated?
+          c.outdated?(greedy: true)
         end
 
         puts "Found #{outdated.size} outdated cask." if args.verbose?
@@ -113,8 +118,22 @@ module Homebrew
       def list_outdated_formulae
         ohai "Checking for outdated formulae..."
 
-        outdated = Formula.installed.select do |formula|
-          formula.outdated?(fetch_head: true)
+        #outdated = Formula.installed.select do |formula|
+        #  formula.outdated?(fetch_head: true)
+        #end
+
+        outdated = []
+
+        Formula.installed.each do |formula|
+          if formula.outdated?(fetch_head: true)
+            formula.recursive_dependencies.each do |d|
+              f = Formula[d.name]
+              if !f.nil? && f.outdated?(fetch_head: true)
+                outdated << d if d.outdated?(fetch_head: true)
+              end
+            end
+            outdated << formula
+          end
         end
 
         puts "Found #{outdated.size} outdated formulae." if args.verbose?

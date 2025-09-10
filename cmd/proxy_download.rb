@@ -120,7 +120,7 @@ module Homebrew
             downloader = Cask::Download.new(cask)
             downloader.fetch
           else
-            installer = Cask::Installer.new(cask)
+            installer = Cask::Installer.new(cask, force: true)
             installer.install
           end
           return true
@@ -156,11 +156,9 @@ module Homebrew
           end
 
           installer = FormulaInstaller::new(formula)
-          if args.download_only?
-            installer.fetch
-          else
-            installer.install
-          end
+          installer.fetch
+          #installer.install unless args.download_only?
+          installer.install
           return true
         rescue ErrorDuringExecution => e
           if proxies.empty? || (pos + 1 >= proxies.length)
