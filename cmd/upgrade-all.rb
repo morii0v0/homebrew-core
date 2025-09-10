@@ -72,7 +72,7 @@ module Homebrew
         ohai "Checking for outdated cask..."
 
         outdated = Cask::Caskroom.casks.select do |c|
-          c.outdated?
+          c.outdated?(greedy: true)
         end
 
         puts "Found #{outdated.size} outdated cask." if args.verbose?
@@ -127,7 +127,10 @@ module Homebrew
         Formula.installed.each do |formula|
           if formula.outdated?(fetch_head: true)
             formula.recursive_dependencies.each do |d|
-              outdated << d if d.outdated?(fetch_head: true)
+              f = Formula[d.name]
+              if !f.nil? && f.outdated?(fetch_head: true)
+                outdated << d if d.outdated?(fetch_head: true)
+              end
             end
             outdated << formula
           end
