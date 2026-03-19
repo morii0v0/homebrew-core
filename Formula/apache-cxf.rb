@@ -6,7 +6,7 @@ class ApacheCxf < Formula
   homepage 'https://cxf.apache.org'
   version '4.2.0'
   url "https://archive.apache.org/dist/cxf/#{version}/apache-cxf-#{version}.tar.gz"
-  sha256 '70ec09e5431e4833f923efe5f2206859e10f14fb1b4b56f7f0b1358f94751270'
+  sha256 'ede1da4d4363e2393c2048524f9c221c99f4190f27ca69a04b4664760f5890a8'
   license 'Apache-2.0'
   revision 1
 
