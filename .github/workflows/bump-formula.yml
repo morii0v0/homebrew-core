@@ -26,9 +26,10 @@ jobs:
       - name: Bump formula
         env:
           HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.HOMEBREW_GITHUB_API_TOKEN }}
+          BREW_TAP_NAME: ${{ vars.BREW_TAP_NAME }}
         run: |
           brew bump-formula-pr \
-            --tap=morii0v0/homebrew-core \
+            --tap=${BREW_TAP_NAME} \
             --formula=your-formula-name \
             --message="Update formula to latest version" \
             --no-browse
