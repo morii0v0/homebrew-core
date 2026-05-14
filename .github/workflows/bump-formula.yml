@@ -29,7 +29,6 @@ jobs:
           BREW_TAP_NAME: ${{ vars.BREW_TAP_NAME }}
         run: |
           brew bump-formula-pr \
-            --tap=${BREW_TAP_NAME} \
-            --formula=your-formula-name \
             --message="Update formula to latest version" \
-            --no-browse
+            --no-browse \
+            ${BREW_TAP_NAME}/openvpn3
