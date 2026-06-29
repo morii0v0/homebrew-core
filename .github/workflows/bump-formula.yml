@@ -2,7 +2,7 @@ name: Bump formula on upstream release
 
 on:
   schedule:
-    - cron: '0 0 * * *'          # 每天 UTC 0 点运行
+    - cron: '0 0 * * 1'          # 每周一 UTC 0 点运行
   workflow_dispatch:               # 允许手动触发
 
 jobs:
