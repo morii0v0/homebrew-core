@@ -1,8 +1,7 @@
 class ApacheCxf < Formula
   desc "Apache CXF - an open source services framework"
   homepage "https://cxf.apache.org"
-  version "4.1.3"
-  url "https://archive.apache.org/dist/cxf/#{version}/apache-cxf-#{version}.tar.gz"
+  url "https://archive.apache.org/dist/cxf/4.1.3/apache-cxf-4.1.3.tar.gz"
   sha256 "70ec09e5431e4833f923efe5f2206859e10f14fb1b4b56f7f0b1358f94751270"
   license "Apache-2.0"
 
@@ -84,7 +83,7 @@ class ApacheCxf < Formula
   end
 
   test do
-    system "#{Formula["openjdk"].opt_bin}/java", "-version"
+    system "#{Formula["openjdk"].bin}/java", "-version"
 
     system "#{bin}/cxf-env", "java", "-cp", "#{libexec}/lib/cxf-core-#{version}.jar", "-version"
   end
