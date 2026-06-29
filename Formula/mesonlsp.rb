@@ -7,6 +7,11 @@ class Mesonlsp < Formula
   version '4.3.7'
   license 'GPL-3.0'
 
+  livecheck do
+    url :stable
+    strategy :github_latest
+  end
+
   on_arm do
     url "https://github.com/JCWasmx86/mesonlsp/releases/download/v#{version}/mesonlsp-aarch64-apple-darwin.zip"
     sha256 '094ffaa4aebecd17651334b8218a38b965fa262de1ccc5cebffa88ffcc3590aa'
