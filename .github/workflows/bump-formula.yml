@@ -42,6 +42,7 @@ jobs:
             echo "::group::Bumping $formula to $version"
             brew bump-formula-pr \
               --version="$version" \
+              --no-audit \
               --no-browse \
               --no-fork \
               --message="$formula: update to $version" \
