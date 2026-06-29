@@ -39,16 +39,39 @@ module Homebrew
       def is_proxyed(url, proxy_addrs)
         uri = URI.parse(url.to_s)
         !uri.nil? && proxy_addrs.include?(uri.host)
-        # url.match?(/\Ahttps?:\/\/mirrors\.ustc\.edu\.cn/)
       end
 
       def concat_with_proxy(url, proxy)
-        # url.to_s.sub(/https?:\/\//, "https://#{proxy}/")
         url.to_s.sub(%r{https?://}, "https://#{proxy}/")
       end
 
       def replace_with_proxy(url, proxy)
         url.to_s.sub(%r{https?://[^/]+/}, "https://#{proxy}/")
+      end
+
+      # Download a file from mirror to the expected cache path.
+      # Returns true if successfully downloaded via mirror, false if all mirrors failed.
+      def mirror_download_to_cache(original_url, cache_path, proxies)
+        return false if proxies.empty?
+
+        proxies.each_with_index do |proxy, idx|
+          next if is_proxyed(original_url, [proxy])
+
+          mirror_url = replace_with_proxy(original_url, proxy)
+          begin
+            ohai "Downloading via mirror: #{proxy}"
+            cache_path.dirname.mkpath unless cache_path.dirname.exist?
+            system "curl", "-fsSL", "--retry", "3", "--retry-delay", "2",
+                   "-o", cache_path.to_s, mirror_url
+            if $?.success? && cache_path.exist? && cache_path.size.positive?
+              return true
+            end
+          rescue
+            # Continue to next proxy on error
+          end
+          opoo "Mirror #{proxy} failed, trying next..." if idx + 1 < proxies.length
+        end
+        false
       end
 
       def get_target_dir
@@ -107,33 +130,31 @@ module Homebrew
         if !c.is_a?(Cask)
           c = Cask::CaskLoader.load(c.to_s)
         end
-        pos = 0
+
         proxies = proxyed_files_addrs
         using_proxy = !proxies.empty?
+
         begin
-          cask = c.dup
+          # Pre-download: try mirrors first, download to expected cache path
           if using_proxy
-            proxy_url = concat_with_proxy(c.url, proxies[pos])
-            cask.define_singleton_method(:url) { Cask::URL.new(proxy_url) }
+            cache_path = Cask::Download.new(c).cached_download
+            unless cache_path.exist?
+              mirror_download_to_cache(c.url.to_s, cache_path, proxies)
+            end
           end
+
+          # Install with original cask (URL unchanged) — installer finds cached file
+          installer = Cask::Installer.new(c, force: true)
           if args.download_only?
-            downloader = Cask::Download.new(cask)
-            downloader.fetch
+            installer = Cask::Download.new(c)
+            installer.fetch
           else
-            installer = Cask::Installer.new(cask, force: true)
             installer.install
           end
           return true
         rescue ErrorDuringExecution => e
-          if using_proxy
-            onoe "Failed to upgrade #{c.name} while using proxy(#{proxies[pos]}): #{e}"
-            pos += 1
-            using_proxy = false if pos >= proxies.length
-            retry
-          else
-            onoe "Failed to upgrade #{c.name}: #{e}"
-            return false
-          end
+          onoe "Failed to install #{c.token}: #{e}"
+          return false
         end
       end
 
@@ -145,31 +166,26 @@ module Homebrew
           f = Formula[f.to_s]
         end
 
-        pos = 0
-        proxies = proxyed_bottle_addrs
-        using_proxy = !proxies.empty? && !is_proxyed(f.bottle.url, proxies)
         begin
-          formula = f.dup
-          if using_proxy
-            url = replace_with_proxy(f.bottle.url, proxies[pos])
-            formula.bottle.define_singleton_method(:url) { url }
+          # Pre-download via mirror: download bottle to the expected cache path
+          bottle = f.bottle
+          if !bottle.nil? && !bottle.url.nil? && !is_proxyed_bottle(bottle.url)
+            cache_path = bottle.cached_download
+            unless cache_path.exist?
+              mirror_download_to_cache(bottle.url, cache_path, proxyed_bottle_addrs)
+            end
           end
 
-          installer = FormulaInstaller::new(formula)
+          # Install with original formula (URL unchanged)
+          # FormulaInstaller#fetch checks cached_download.exist? first, skips download if cached.
+          # Then it verifies checksum and pours the bottle.
+          installer = FormulaInstaller::new(f)
           installer.fetch
-          #installer.install unless args.download_only?
-          installer.install
+          installer.install unless args.respond_to?(:download_only?) && args.download_only?
           return true
         rescue ErrorDuringExecution => e
-          if proxies.empty? || (pos + 1 >= proxies.length)
-            onoe "Failed to upgrade #{f.name}: #{e}"
-            return false
-          else
-            onoe "Failed to upgrade #{f.name} while using proxy(#{proxies[pos]}): #{e}"
-            using_proxy = !proxies.empty? && pos < proxies.length
-            pos += 1
-            retry
-          end
+          onoe "Failed to install #{f.name}: #{e}"
+          return false
         end
       end
     end
