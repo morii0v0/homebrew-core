@@ -2,12 +2,14 @@ name: Bump formula on upstream release
 
 on:
   schedule:
-    - cron: '0 0 1,11,21 * *'
-  workflow_dispatch:   # 允许手动触发
+    - cron: '0 0 * * *'          # 每天 UTC 0 点运行
+  workflow_dispatch:               # 允许手动触发
 
 jobs:
-  bump:
-    runs-on: macos-latest   # 或 ubuntu-latest，但 macOS 有 Homebrew 预装
+  livecheck:
+    runs-on: macos-latest
+    outputs:
+      outdated: ${{ steps.livecheck.outputs.outdated }}
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
@@ -23,12 +25,46 @@ jobs:
       - name: Install Homebrew tap
         run: brew tap morii0v0/homebrew-core
 
-      - name: Bump formula
+      - name: Run brew livecheck
+        id: livecheck
+        run: |
+          # 获取所有需要更新的 formula 列表（JSON 数组）
+          OUTDATED=$(brew livecheck --tap morii0v0/homebrew-core --newer-only --json 2>/dev/null || echo "[]")
+
+          # 提取 formula 名称
+          FORMULAS=$(echo "$OUTDATED" | jq -c '[.[] | .formula]')
+
+          echo "Outdated formulas: $FORMULAS"
+          echo "outdated=$FORMULAS" >> $GITHUB_OUTPUT
+
+  bump:
+    needs: livecheck
+    if: needs.livecheck.outputs.outdated != '[]' && needs.livecheck.outputs.outdated != '' && needs.livecheck.outputs.outdated != 'null'
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false              # 某一个失败不影响其他
+      matrix:
+        formula: ${{ fromJson(needs.livecheck.outputs.outdated) }}
+    steps:
+      - name: Set up Homebrew
+        id: set-up-homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Cache Homebrew Bundler RubyGems
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.set-up-homebrew.outputs.gems-path }}
+          key: ${{ runner.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
+          restore-keys: ${{ runner.os }}-rubygems-
+
+      - name: Install Homebrew tap
+        run: brew tap morii0v0/homebrew-core
+
+      - name: Bump ${{ matrix.formula }}
         env:
           HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.HOMEBREW_GITHUB_API_TOKEN }}
-          BREW_TAP_NAME: ${{ vars.BREW_TAP_NAME }}
         run: |
           brew bump-formula-pr \
-            --message="Update formula to latest version" \
+            --message="Update ${{ matrix.formula }} to latest version" \
             --no-browse \
-            ${BREW_TAP_NAME}/openvpn3
+            morii0v0/homebrew-core/${{ matrix.formula }}
