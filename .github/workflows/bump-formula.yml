@@ -26,6 +26,7 @@ jobs:
       - name: Bump outdated formulae
         env:
           HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.HOMEBREW_GITHUB_API_TOKEN }}
+          GH_TOKEN: ${{ secrets.HOMEBREW_GITHUB_API_TOKEN }}
         run: |
           set -euo pipefail
 
@@ -36,6 +37,13 @@ jobs:
 
           echo "$OUTDATED" | jq -r '.[] | "\(.formula)\t\(.version.latest)"' | while IFS=$'\t' read -r formula version; do
             if [ -z "$formula" ] || [ -z "$version" ]; then
+              continue
+            fi
+
+            # 检查是否已有同版本 PR
+            BRANCH="bump-${formula}-${version}"
+            if gh pr list --head "$BRANCH" --state open --json number --jq 'length' 2>/dev/null | grep -q '[1-9]'; then
+              echo "::notice::Skipping $formula $version: PR already exists"
               continue
             fi
 
