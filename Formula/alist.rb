@@ -12,10 +12,8 @@ class Alist < Formula
     strategy :github_latest
   end
 
-  on_arm do
-    url "https://github.com/AlistGo/alist/releases/download/v#{version}/alist-darwin-arm64.tar.gz"
-    sha256 '70f0db97a3f6235301d8567ca6fd96604fb8ad232c872643b7e5137df46b512d'
-  end
+  url "https://github.com/AlistGo/alist/releases/download/v#{version}/alist-darwin-arm64.tar.gz"
+  sha256 '70f0db97a3f6235301d8567ca6fd96604fb8ad232c872643b7e5137df46b512d'
 
   on_intel do
     url "https://github.com/AlistGo/alist/releases/download/v#{version}/alist-darwin-amd64.tar.gz"
@@ -24,9 +22,6 @@ class Alist < Formula
 
   def install
     prefix.install "alist"
-    # libexec.install Dir['*']
-
-    # bin.install_symlink Dir["#{libexec}/alist"]
   end
 
   test do

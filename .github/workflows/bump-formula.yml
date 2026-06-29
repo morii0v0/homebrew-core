@@ -29,9 +29,12 @@ jobs:
         run: |
           set -euo pipefail
 
+          # 避免 openvpn3 和 homebrew/core 冲突
+          brew untap homebrew/core 2>/dev/null || true
+
           OUTDATED=$(brew livecheck --tap morii0v0/homebrew-core --newer-only --json 2>/dev/null || echo "[]")
 
-          echo "$OUTDATED" | jq -r '.[] | "\(.formula) \(.version.latest)"' | while read -r formula version; do
+          echo "$OUTDATED" | jq -r '.[] | "\(.formula)\t\(.version.latest)"' | while IFS=$'\t' read -r formula version; do
             if [ -z "$formula" ] || [ -z "$version" ]; then
               continue
             fi

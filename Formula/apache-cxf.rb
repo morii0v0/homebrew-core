@@ -5,7 +5,6 @@ class ApacheCxf < Formula
   url "https://archive.apache.org/dist/cxf/#{version}/apache-cxf-#{version}.tar.gz"
   sha256 "70ec09e5431e4833f923efe5f2206859e10f14fb1b4b56f7f0b1358f94751270"
   license "Apache-2.0"
-  revision 1
 
   livecheck do
     url "https://archive.apache.org/dist/cxf/"
