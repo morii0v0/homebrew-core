@@ -1,8 +1,8 @@
 class ApacheCxf < Formula
   desc "Apache CXF - an open source services framework"
   homepage "https://cxf.apache.org"
-  url "https://archive.apache.org/dist/cxf/4.1.3/apache-cxf-4.1.3.tar.gz"
-  sha256 "70ec09e5431e4833f923efe5f2206859e10f14fb1b4b56f7f0b1358f94751270"
+  url "https://archive.apache.org/dist/cxf/4.2.2/apache-cxf-4.2.2.tar.gz"
+  sha256 "150b28e3c84a0e3c266ffe5e2ca8ec9f4721e23827e2661cd80afee555c84065"
   license "Apache-2.0"
 
   livecheck do
