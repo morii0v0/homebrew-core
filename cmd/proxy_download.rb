@@ -49,7 +49,34 @@ module Homebrew
         url.to_s.sub(%r{https?://[^/]+/}, "https://#{proxy}/")
       end
 
-      # Download a file from mirror to the expected cache path.
+      # Download a file from proxy (concat_with_proxy format) to the expected cache path.
+      # URL format: https://proxy/github.com/a/b/c -> saved as original filename.
+      # Returns true if successfully downloaded via proxy, false if all proxies failed.
+      def proxy_download_to_cache(original_url, cache_path, proxies)
+        return false if proxies.empty?
+
+        proxies.each_with_index do |proxy, idx|
+          next if is_proxyed(original_url, [proxy])
+
+          proxy_url = concat_with_proxy(original_url, proxy)
+          begin
+            ohai "Downloading via proxy: #{proxy}"
+            cache_path.dirname.mkpath unless cache_path.dirname.exist?
+            system "curl", "-fsSL", "--retry", "3", "--retry-delay", "2",
+                   "-o", cache_path.to_s, proxy_url
+            if $?.success? && cache_path.exist? && cache_path.size.positive?
+              return true
+            end
+          rescue
+            # Continue to next proxy on error
+          end
+          opoo "Proxy #{proxy} failed, trying next..." if idx + 1 < proxies.length
+        end
+        false
+      end
+
+      # Download a file from mirror (replace_with_proxy format) to the expected cache path.
+      # URL format: https://mirror/a/b/c.
       # Returns true if successfully downloaded via mirror, false if all mirrors failed.
       def mirror_download_to_cache(original_url, cache_path, proxies)
         return false if proxies.empty?
@@ -135,19 +162,33 @@ module Homebrew
         using_proxy = !proxies.empty?
 
         begin
-          # Pre-download: try mirrors first, download to expected cache path
-          if using_proxy
-            cache_path = Cask::Download.new(c).cached_download
-            unless cache_path.exist?
-              mirror_download_to_cache(c.url.to_s, cache_path, proxies)
+          download = Cask::Download.new(c)
+          cache_path = download.cached_download
+          cached = cache_path.exist? && cache_path.size.positive?
+
+          # Pre-download via proxy if not already cached
+          if using_proxy && !cached
+            # Try proxyed_files_addrs first (concat_with_proxy format: https://proxy/github.com/a/b/c)
+            cached = proxy_download_to_cache(c.url.to_s, cache_path, proxies)
+            # Fall back to mirror addresses (replace_with_proxy format)
+            cached ||= mirror_download_to_cache(c.url.to_s, cache_path, proxyed_bottle_addrs)
+          end
+
+          if cached
+            ohai "Cask cached via proxy: #{cache_path}"
+            if args.download_only?
+              return true
             end
+          elsif args.download_only?
+            onoe "Failed to download #{c.token} via proxy, aborting to avoid direct request"
+            return false
           end
 
           # Install with original cask (URL unchanged) — installer finds cached file
           installer = Cask::Installer.new(c, force: true)
           if args.download_only?
-            installer = Cask::Download.new(c)
-            installer.fetch
+            download = Cask::Download.new(c)
+            download.fetch
           else
             installer.install
           end
@@ -167,21 +208,31 @@ module Homebrew
         end
 
         begin
-          # Pre-download via mirror: download bottle to the expected cache path
+          # Pre-download via proxy: download bottle to the expected cache path
           bottle = f.bottle
-          if !bottle.nil? && !bottle.url.nil? && !is_proxyed_bottle(bottle.url)
+          bottle_cached = false
+          if !bottle.nil? && !bottle.url.nil? && !is_proxyed_files(bottle.url)
             cache_path = bottle.cached_download
-            unless cache_path.exist?
-              mirror_download_to_cache(bottle.url, cache_path, proxyed_bottle_addrs)
+            if cache_path.exist? && cache_path.size.positive?
+              bottle_cached = true
+            else
+              # Try proxyed_files_addrs first (concat_with_proxy format: https://proxy/github.com/a/b/c)
+              bottle_cached = proxy_download_to_cache(bottle.url, cache_path, proxyed_files_addrs)
+              # Fall back to proxyed_bottle_addrs (replace_with_proxy / mirror format)
+              bottle_cached ||= mirror_download_to_cache(bottle.url, cache_path, proxyed_bottle_addrs)
             end
           end
 
-          # Install with original formula (URL unchanged)
-          # FormulaInstaller#fetch checks cached_download.exist? first, skips download if cached.
-          # Then it verifies checksum and pours the bottle.
-          installer = FormulaInstaller::new(f)
-          installer.fetch
-          installer.install unless args.respond_to?(:download_only?) && args.download_only?
+          if bottle_cached
+            # Bottle is already cached, pour directly without fetch (avoids HEAD requests)
+            ohai "Bottle cached via proxy, pouring directly"
+            installer = FormulaInstaller::new(f)
+            installer.pour
+          else
+            installer = FormulaInstaller::new(f)
+            installer.fetch
+            installer.install unless args.respond_to?(:download_only?) && args.download_only?
+          end
           return true
         rescue ErrorDuringExecution => e
           onoe "Failed to install #{f.name}: #{e}"
