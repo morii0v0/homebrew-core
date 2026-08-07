@@ -7,8 +7,8 @@ class Openvpn3 < Formula
   #url 'https://github.com/OpenVPN/openvpn3/archive/refs/tags/release/3.11.6.zip'
   #sha256 '5141763504e0996f97bb67590bab6946ba3a875fc69dc998522861ea20603dc1'
   homepage 'https://github.com/OpenVPN/openvpn3/'
-  url "https://github.com/OpenVPN/openvpn3/archive/refs/tags/release/3.11.6.zip"
-  sha256 "5141763504e0996f97bb67590bab6946ba3a875fc69dc998522861ea20603dc1"
+  url "https://github.com/OpenVPN/openvpn3/archive/refs/tags/release/3.11.7.zip"
+  sha256 "2f08c866dd7319aeb5b2babc717c29c0dc680b1d7a386417c825b4a203fd0cce"
   license 'GPL-2.0-only' => { with: 'openvpn-openssl-exception' }
 
   depends_on 'cmake'      => :build
