@@ -11,10 +11,10 @@ class Alist < Formula
     strategy :github_latest
   end
 
-  if Hardware::CPU.arm?
-    url "https://github.com/AlistGo/alist/releases/download/v3.60.0/alist-darwin-arm64.tar.gz"
-    sha256 "70f0db97a3f6235301d8567ca6fd96604fb8ad232c872643b7e5137df46b512d"
-  else
+  url "https://github.com/AlistGo/alist/releases/download/v3.60.0/alist-darwin-arm64.tar.gz"
+  sha256 "70f0db97a3f6235301d8567ca6fd96604fb8ad232c872643b7e5137df46b512d"
+
+  on_intel do
     url "https://github.com/AlistGo/alist/releases/download/v3.60.0/alist-darwin-amd64.tar.gz"
     sha256 "aae0928d10d9c284d6975d31984da32ac7e40d4eae9a88928843a508d585bbcb"
   end
