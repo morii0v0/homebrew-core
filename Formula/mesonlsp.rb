@@ -11,8 +11,8 @@ class Mesonlsp < Formula
     strategy :github_latest
   end
 
-  url "https://github.com/JCWasmx86/mesonlsp/releases/download/v4.3.7/mesonlsp-aarch64-apple-darwin.zip"
-  sha256 "094ffaa4aebecd17651334b8218a38b965fa262de1ccc5cebffa88ffcc3590aa"
+  url "https://github.com/JCWasmx86/mesonlsp/releases/download/v5.0.4/mesonlsp-aarch64-apple-darwin.zip"
+  sha256 "c4681182352f863a270c51f0af1e06badb87c774808d19e1c2140846206b2b8f"
 
   on_intel do
     url "https://github.com/JCWasmx86/mesonlsp/releases/download/v4.3.7/mesonlsp-x86_64-apple-darwin.zip"
