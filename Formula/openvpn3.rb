@@ -17,7 +17,7 @@ class Openvpn3 < Formula
   depends_on 'fmt'        => :build
   depends_on 'jsoncpp'    => :build
   depends_on 'lz4'        => :build
-  depends_on 'openssl'    => :build
+  depends_on 'openssl@3'  => :build
   depends_on 'xxhash'     => :build
 
   def install
@@ -34,7 +34,7 @@ class Openvpn3 < Formula
   service do
     run [opt_sbin / 'openvpn3', etc / 'openvpn3/config.ovpn']
     keep_alive true
-    require_root true
+    #require_root true
     working_dir etc / 'openvpn3'
   end
 
@@ -50,5 +50,15 @@ class Openvpn3 < Formula
 
   test do
     system sbin / 'openvpn3', '--help'
+  end
+
+  def caveats
+    <<~EOS
+      The ovpncli binary from openvpn3 requires setuid root.
+      Please run the following manually:
+
+        sudo chown root:wheel #{opt_sbin}/openvpn3
+        sudo chmod 4755 #{opt_sbin}/openvpn3
+    EOS
   end
 end
