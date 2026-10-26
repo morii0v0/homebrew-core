@@ -11,8 +11,8 @@ class Alist < Formula
     strategy :github_latest
   end
 
-  url "https://github.com/AlistGo/alist/releases/download/v3.65.0/alist-darwin-arm64.tar.gz"
-  sha256 "d97977f5b3ea874a560a10e1ebfe3082a24cf5a2bab52e17c3b4661facb03da6"
+  url "https://github.com/AlistGo/alist/releases/download/v3.66.0/alist-darwin-arm64.tar.gz"
+  sha256 "b9657f62df0f9648a309fe6db7ad6fef806b228df98076c363af9390d57f1bb4"
 
   on_intel do
     url "https://github.com/AlistGo/alist/releases/download/v3.60.0/alist-darwin-amd64.tar.gz"
